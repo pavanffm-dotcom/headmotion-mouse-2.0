@@ -144,7 +144,7 @@ class GoalManager {
         val rawSentences = goal.split(sentenceDelims).map { it.trim() }.filter { it.isNotBlank() }
 
         val splitWords = listOf(
-            " and then ", " then ", " and ", 
+            " -> ", "->", " and then ", " then ", " and ", 
             " aur fir ", " aur phir ", " aur ", 
             " phir ", " fir ", " ke baad ", " uske baad ",
             " karke ", " to ", " so "

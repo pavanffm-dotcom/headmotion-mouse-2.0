@@ -181,7 +181,8 @@ class DynamicPlanner(
      */
     suspend fun decideNextAction(
         missionState: MissionState,
-        modelClient: ModelClient
+        modelClient: ModelClient,
+        memoryContext: String? = null
     ): ToolCall {
         val currentObservation = missionState.currentObservation
             ?: WorldState(foregroundPackage = "unknown")
@@ -233,7 +234,8 @@ class DynamicPlanner(
             currentSubgoal = subgoal,
             compressedScreenIndex = currentObservation.toCompressedSemanticIndex(),
             actionHistory = fullHistory,
-            screenshotBase64 = screenshot
+            screenshotBase64 = screenshot,
+            memoryContext = memoryContext
         )
 
         val structuredResult = try {
@@ -354,7 +356,10 @@ class DynamicPlanner(
                 targetText.contains(node.label.lowercase()) ||
                 (node.label.length > 3 && targetText.contains(node.label.lowercase()))
             )
-        }
+        } ?: if (targetText.contains("open result") || targetText.contains("open first") || targetText.contains("click result")) {
+            nodes.firstOrNull { it.isClickable && it.label.length > 5 }
+        } else null
+
         if (matchedNode != null) {
             return ToolCall(
                 name = CanonicalTools.TAP_ELEMENT,
@@ -381,16 +386,19 @@ class DynamicPlanner(
     }
 
     private fun isWebInformationQuery(goal: String, subgoal: String): Boolean {
+        val original = goal.lowercase().trim()
         val text = (subgoal.ifBlank { goal }).lowercase().trim()
+        val combined = "$original $text"
         val keywords = listOf(
             "latest", "news", "summarize", "search web", "web search",
             "search the web", "search online", "who is", "what is",
             "tell me about", "look up", "find out", "weather",
             "current price", "score of"
         )
-        val isAppSearch = text.contains("youtube") || text.contains("play store") ||
-                text.contains("playstore") || text.contains("settings") ||
-                text.contains("instagram") || text.contains("whatsapp")
+        val isAppSearch = combined.contains("youtube") || combined.contains("play store") ||
+                combined.contains("playstore") || combined.contains("settings") ||
+                combined.contains("instagram") || combined.contains("whatsapp") ||
+                combined.contains("chrome") || combined.contains("browser")
         return !isAppSearch && keywords.any { text.contains(it) }
     }
 
@@ -441,6 +449,12 @@ class DynamicPlanner(
 
     private fun extractSearchQuery(text: String): String {
         val lower = text.lowercase()
+        // If quoted query e.g. search "AI news"
+        val quoteMatch = Regex("\"([^\"]+)\"").find(text)
+        if (quoteMatch != null) {
+            return quoteMatch.groupValues[1].trim()
+        }
+
         val raw = when {
             lower.contains("search for") -> {
                 val idx = lower.indexOf("search for")
@@ -463,5 +477,6 @@ class DynamicPlanner(
             .removePrefix("for")
             .removePrefix("karo")
             .trim()
+            .trim('"', '\'')
     }
 }

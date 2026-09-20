@@ -82,8 +82,8 @@ class SafetyGate(
 
         private val IMPORTANT_FORM_KEYWORDS = listOf(
             "submit order", "confirm order", "transfer funds", "send money",
-            "grant permission", "allow permission", "factory reset", "reset all",
-            "change password", "update password", "sign in", "login"
+            "grant permission", "allow permission", "permission", "permissions", "allow all", "grant all",
+            "factory reset", "reset all", "change password", "update password", "sign in", "login"
         )
 
         private val SETTINGS_KEYWORDS = listOf(
@@ -201,7 +201,16 @@ class SafetyGate(
      * Legacy classification for backward compatibility with existing callers.
      */
     fun classifySafety(step: ActionStep): SafetyLevel {
-        return when (classifyRisk(step)) {
+        val text = (step.text ?: step.target?.value ?: "").lowercase()
+        val risk = classifyRisk(step)
+        if (risk == ActionRisk.HIGH) {
+            val sensitiveKeywords = listOf("permission", "allow", "grant", "camera", "microphone", "location", "account", "profile", "draft")
+            if (sensitiveKeywords.any { text.contains(it) }) {
+                return SafetyLevel.SENSITIVE
+            }
+            return SafetyLevel.DESTRUCTIVE
+        }
+        return when (risk) {
             ActionRisk.LOW -> SafetyLevel.SAFE
             ActionRisk.MEDIUM -> SafetyLevel.REVERSIBLE
             ActionRisk.HIGH -> SafetyLevel.DESTRUCTIVE

@@ -89,7 +89,7 @@ class JarvisPhase9GeminiToolCallingTest {
         @Suppress("UNCHECKED_CAST")
         val decls = geminiTools[0]["function_declarations"] as? List<Map<String, Any?>>
         assertNotNull("function_declarations list must not be null", decls)
-        assertEquals(12, decls!!.size)
+        assertEquals(CanonicalTools.ALL_DEFINITIONS.size, decls!!.size)
 
         // Verify tap_element schema
         val tapDef = decls.firstOrNull { it["name"] == CanonicalTools.TAP_ELEMENT }
@@ -159,7 +159,7 @@ class JarvisPhase9GeminiToolCallingTest {
         @Suppress("UNCHECKED_CAST")
         val decls = tools[0]["function_declarations"] as? List<Map<String, Any?>>
         assertNotNull("function_declarations must be present", decls)
-        assertEquals(12, decls!!.size)
+        assertEquals(CanonicalTools.ALL_DEFINITIONS.size, decls!!.size)
     }
 
     // =========================================================================

@@ -7,6 +7,7 @@ import android.util.Log
 import com.assistive.headmouse.agent.model.ScreenNode
 import com.assistive.headmouse.agent.perception.SpatialNodeCache
 import com.assistive.headmouse.agent.jarvis.action.*
+import com.assistive.headmouse.agent.jarvis.memory.JarvisMemoryHub
 import com.assistive.headmouse.agent.jarvis.memory.JarvisMemoryManager
 import com.assistive.headmouse.preferences.AiProvider
 import com.assistive.headmouse.service.HeadMouseAccessibilityService
@@ -75,7 +76,8 @@ class JarvisBrain(
 
     private val conversationHistory = mutableListOf<JarvisMessage>()
     val fileManager = context?.let { JarvisFileManager(it) }
-    val memoryManager = context?.let { JarvisMemoryManager(it) }
+    val memoryHub = context?.let { JarvisMemoryHub.getInstance(it) }
+    val memoryManager = memoryHub?.conversationMemory ?: context?.let { JarvisMemoryManager(it) }
     val screenObserver = ScreenObserver()
     val actionExecutor = context?.let { ActionExecutor(it, screenObserver) }
 
@@ -87,7 +89,7 @@ class JarvisBrain(
 
     fun clearHistory() {
         conversationHistory.clear()
-        memoryManager?.clearMemory()
+        memoryHub?.clearAll() ?: memoryManager?.clearMemory()
     }
 
     /**

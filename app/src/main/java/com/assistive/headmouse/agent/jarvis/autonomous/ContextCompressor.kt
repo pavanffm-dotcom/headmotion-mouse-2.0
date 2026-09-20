@@ -62,7 +62,8 @@ CRITICAL RULES:
         compressedScreenIndex: String,
         actionHistory: List<String>,
         maxHistorySteps: Int = 4,
-        maxTokenBudget: Int = 1000
+        maxTokenBudget: Int = 1000,
+        historicalMemoryContext: String? = null
     ): String {
         val sanitizedGoal = originalGoal.trim()
         val sanitizedSubgoal = currentSubgoal?.trim()?.takeIf { it.isNotBlank() && !it.equals(sanitizedGoal, ignoreCase = true) }
@@ -88,6 +89,14 @@ CRITICAL RULES:
             append("ORIGINAL GOAL: \"").append(sanitizedGoal).append("\"\n")
             if (sanitizedSubgoal != null) {
                 append("CURRENT SUBGOAL: \"").append(sanitizedSubgoal).append("\"\n")
+            }
+            if (!historicalMemoryContext.isNullOrBlank()) {
+                val boundedMemory = if (historicalMemoryContext.length > 400) {
+                    historicalMemoryContext.take(397) + "..."
+                } else {
+                    historicalMemoryContext
+                }
+                append("\nRELEVANT MEMORY & LEARNED PATTERNS:\n").append(boundedMemory.trim()).append("\n")
             }
             if (filteredHistory.isNotEmpty()) {
                 append("\nRECENT ACTION HISTORY:\n")

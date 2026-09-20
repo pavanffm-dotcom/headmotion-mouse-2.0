@@ -409,7 +409,7 @@ class JarvisModelClientReliabilityTest {
         assertTrue("Request body must contain 'tools'", jsonMap.containsKey("tools"))
         @Suppress("UNCHECKED_CAST")
         val toolsList = jsonMap["tools"] as? List<Map<String, Any?>> ?: emptyList()
-        assertEquals(12, toolsList.size) // All 12 canonical tools serialized
+        assertEquals(CanonicalTools.ALL_DEFINITIONS.size, toolsList.size) // All canonical tools serialized
 
         // Verify tool schema structure (type=function, function.name, function.parameters)
         val firstTool = toolsList[0]

@@ -191,9 +191,10 @@ class JarvisMemoryManager(private val context: Context) {
      */
     fun addTurn(role: String, content: String, actionExecuted: String? = null) {
         if (content.isBlank()) return
+        val sanitized = MemorySecuritySanitizer.sanitize(content.trim())
         synchronized(lock) {
-            turns.add(MemoryTurn(role = role, content = content.trim(), actionExecuted = actionExecuted))
-            extractFactsFromUtterance(role, content)
+            turns.add(MemoryTurn(role = role, content = sanitized, actionExecuted = actionExecuted))
+            extractFactsFromUtterance(role, sanitized)
             saveToDisk()
         }
     }

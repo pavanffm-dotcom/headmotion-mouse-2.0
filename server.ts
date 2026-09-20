@@ -94,31 +94,29 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // Serve root / or /index.html from test_simulator/index.html
+  // Route /simulator.html to original legacy camera test
+  if (pathname === '/simulator.html') {
+    const origPath = path.join(__dirname, 'test_simulator', 'index.html');
+    if (fs.existsSync(origPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(origPath).pipe(res);
+      return;
+    }
+  }
+
+  // Serve root / or /index.html from test_simulator/hub.html (Native Android Hub)
   if (pathname === '/' || pathname === '/index.html') {
+    const hubPath = path.join(__dirname, 'test_simulator', 'hub.html');
+    if (fs.existsSync(hubPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(hubPath).pipe(res);
+      return;
+    }
     const htmlPath = path.join(__dirname, 'test_simulator', 'index.html');
     if (fs.existsSync(htmlPath)) {
-      try {
-        let content = fs.readFileSync(htmlPath, 'utf8');
-        // Inject APK download banner if not already present
-        if (!content.includes('id="apk-download-btn"')) {
-          const bannerHtml = `
-            <a id="apk-download-btn" href="/app-debug.apk" style="display:inline-flex;align-items:center;gap:8px;background:#00e5ff;color:#101014;font-weight:700;font-size:0.82rem;padding:6px 14px;border-radius:20px;text-decoration:none;transition:opacity 0.2s;" title="Download Android APK">
-              <span>⬇ Download Android APK</span>
-            </a>`;
-          content = content.replace(
-            '<div class="header-actions">',
-            `<div class="header-actions">${bannerHtml}`
-          );
-        }
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(content);
-        return;
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Error loading simulator: ' + String(err));
-        return;
-      }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(htmlPath).pipe(res);
+      return;
     }
   }
 

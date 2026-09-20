@@ -151,6 +151,7 @@ class VerificationEngine {
                 val textToType = toolCall.arguments["text"]?.toString() ?: ""
                 val textFoundInNodes = postState.nodes.any {
                     (it.text?.contains(textToType, ignoreCase = true) == true) ||
+                    (it.label.contains(textToType, ignoreCase = true)) ||
                     (it.isFocused && it.label.contains(textToType, ignoreCase = true))
                 }
                 when {
@@ -158,7 +159,7 @@ class VerificationEngine {
                         VerificationResult(
                             state = VerificationState.SUCCESS,
                             stateChanged = true,
-                            explanation = "Injected text '$textToType' verified in focused field."
+                            explanation = "Injected text '$textToType' verified on screen / search results."
                         )
                     }
                     stateChanged -> {

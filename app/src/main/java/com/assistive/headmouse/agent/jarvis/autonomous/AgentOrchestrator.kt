@@ -18,6 +18,8 @@ import com.assistive.headmouse.agent.jarvis.autonomous.tools.ToolDispatcher
 import com.assistive.headmouse.agent.jarvis.autonomous.verification.VerificationEngine
 import com.assistive.headmouse.preferences.AppSettings
 import com.assistive.headmouse.service.HeadMouseAccessibilityService
+import com.assistive.headmouse.agent.jarvis.memory.JarvisMemoryHub
+import com.assistive.headmouse.agent.jarvis.memory.MissionOutcome
 import kotlinx.coroutines.*
 
 /**
@@ -58,6 +60,7 @@ class AgentOrchestrator(
     val screenContextManager = ScreenContextManager(screenObserver)
     val navigationTracker = NavigationTracker()
     val missionMemory = MissionMemory()
+    val memoryHub: JarvisMemoryHub? = context?.let { JarvisMemoryHub.getInstance(it) }
     val loopGuard = LoopGuard()
     val safetyGate = SafetyGate(isEnabled = true)
     val timeline = MissionTimeline()
@@ -122,12 +125,14 @@ class AgentOrchestrator(
                 timeline.record("MISSION_CANCELLED", "Interrupted by user")
                 stateMachine.transitionTo(TaskState.CANCELLED, "Cancelled by user")
                 currentMissionState?.status = AutonomousMissionStatus.CANCELLED
+                archiveCurrentMission(MissionOutcome.CANCELLED, "Interrupted by user")
                 onMissionFinished?.invoke(false, "Mission cancelled by user, Sir.")
             } catch (e: Exception) {
                 Log.e(TAG, "Unhandled exception in autonomous mission: ", e)
                 timeline.record("MISSION_FAILED", "Exception: ${e.message}")
                 stateMachine.transitionTo(TaskState.FAILED, e.message)
                 currentMissionState?.status = AutonomousMissionStatus.FAILED
+                archiveCurrentMission(MissionOutcome.FAILED, e.message)
                 voiceEngine?.speak("Mission halted due to an unexpected error, Sir.")
                 onMissionFinished?.invoke(false, "Error: ${e.localizedMessage}")
             }
@@ -237,9 +242,15 @@ class AgentOrchestrator(
                 Log.i(TAG, "[SCREENSHOT_OMITTED] Step #${mission.modelDecisionCount}: Model request without visual frame")
             }
 
+            val memoryContext = memoryHub?.buildContextualMemoryInjection(
+                userGoal = mission.originalUserGoal,
+                activePackage = liveWorldState.foregroundPackage
+            )
+
             val toolCall = dynamicPlanner.decideNextAction(
                 missionState = mission,
-                modelClient = modelClient
+                modelClient = modelClient,
+                memoryContext = memoryContext
             )
             mission.lastAction = toolCall
 
@@ -253,6 +264,7 @@ class AgentOrchestrator(
                 timeline.record("TASK_FINISHED", summary)
                 mission.status = if (isSuccess) AutonomousMissionStatus.COMPLETED else AutonomousMissionStatus.FAILED
                 stateMachine.transitionTo(if (isSuccess) TaskState.COMPLETED else TaskState.FAILED, summary)
+                archiveCurrentMission(if (isSuccess) MissionOutcome.SUCCESS else MissionOutcome.FAILED, summary)
                 voiceEngine?.speak(summary)
                 onMissionFinished?.invoke(isSuccess, summary)
                 return@withContext
@@ -351,6 +363,24 @@ class AgentOrchestrator(
                 durationMs = executionResult.durationMs
             )
             missionMemory.recordExecution(actionStep, uiActionResult)
+            if (liveWorldState.foregroundPackage.isNotBlank() && liveWorldState.foregroundPackage != "unknown") {
+                missionMemory.recordPackage(liveWorldState.foregroundPackage)
+            }
+            if (uiActionResult.success && uiActionResult.verified && actionStep.action == AutonomousActionType.TAP) {
+                val target = actionStep.target?.value
+                val pkg = liveWorldState.foregroundPackage
+                if (!target.isNullOrBlank() && pkg.isNotBlank() && pkg != "unknown") {
+                    val intent = if (target.contains("search", ignoreCase = true)) "search" else "navigation"
+                    memoryHub?.appPatterns?.recordPatternOutcome(
+                        packageName = pkg,
+                        intentType = intent,
+                        description = "Tap on $target",
+                        action = "tap",
+                        targetSelector = target,
+                        succeeded = true
+                    )
+                }
+            }
 
             withContext(Dispatchers.Main) {
                 onStepExecuted?.invoke(actionStep, uiActionResult)
@@ -478,10 +508,30 @@ class AgentOrchestrator(
             mission.status = AutonomousMissionStatus.COMPLETED
             stateMachine.transitionTo(TaskState.COMPLETED, "All objectives fulfilled")
             timeline.record("MISSION_COMPLETED", mission.originalUserGoal)
+            archiveCurrentMission(MissionOutcome.SUCCESS)
             val finishMsg = "Mission completed successfully, Sir."
             voiceEngine?.speak(finishMsg)
             onMissionFinished?.invoke(true, finishMsg)
+        } else if (mission.status == AutonomousMissionStatus.FAILED) {
+            archiveCurrentMission(MissionOutcome.FAILED, mission.lastActionResult?.errorMessage ?: "Mission failed")
         }
+    }
+
+    private fun archiveCurrentMission(outcome: MissionOutcome, failureReason: String? = null) {
+        val mission = currentMissionState ?: return
+        val summary = missionMemory.generateMissionSummary(mission.originalUserGoal)
+        val duration = mission.elapsedDurationMs
+        val packages = (missionMemory.getInvolvedPackages() + listOfNotNull(mission.currentObservation?.foregroundPackage?.takeIf { it != "unknown" })).distinct()
+        memoryHub?.archiveMission(
+            missionId = mission.missionId,
+            goal = mission.originalUserGoal,
+            outcome = outcome,
+            stepsCount = mission.modelDecisionCount,
+            durationMs = duration,
+            summary = summary,
+            failureReason = failureReason,
+            involvedPackages = packages
+        )
     }
 
 

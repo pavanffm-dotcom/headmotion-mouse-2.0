@@ -110,7 +110,8 @@ data class ModelDecisionRequest(
     val availableTools: List<ToolDefinition> = CanonicalTools.ALL_DEFINITIONS,
     val screenshotBase64: String? = null,
     val temperature: Double = 0.1,
-    val maxTokens: Int = 400
+    val maxTokens: Int = 400,
+    val memoryContext: String? = null
 )
 
 /**
@@ -586,7 +587,8 @@ class OpenAiCompatibleClient(
             compressedScreenIndex = request.compressedScreenIndex,
             actionHistory = request.actionHistory,
             maxHistorySteps = 4,
-            maxTokenBudget = 1000
+            maxTokenBudget = 1000,
+            historicalMemoryContext = request.memoryContext
         )
 
         if (request.screenshotBase64.isNullOrBlank()) {
@@ -839,7 +841,8 @@ class GoogleGeminiClient(
             originalGoal = request.originalUserGoal,
             currentSubgoal = request.currentSubgoal,
             compressedScreenIndex = request.compressedScreenIndex,
-            actionHistory = request.actionHistory
+            actionHistory = request.actionHistory,
+            historicalMemoryContext = request.memoryContext
         )
 
         val parts = mutableListOf<Map<String, Any?>>()

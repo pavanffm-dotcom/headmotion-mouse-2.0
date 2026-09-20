@@ -5,9 +5,10 @@ import com.assistive.headmouse.agent.jarvis.action.ActionStep
 import com.assistive.headmouse.agent.jarvis.action.AutonomousActionType
 
 /**
- * Short-term, mission-scoped agent memory (R13).
+ * Short-term, mission-scoped agent memory (R13 & Phase 16 Memory 2.0).
  * Tracks attempted actions, results, recorded failures, and strategies
  * within the lifecycle of a single mission to prevent repetitive mistakes.
+ * Summarizes the mission for archival into TaskHistoryManager upon completion.
  */
 class MissionMemory {
 
@@ -18,6 +19,7 @@ class MissionMemory {
     private val failureRecords = mutableListOf<Pair<ActionStep, String>>()
     private val discoveredElements = mutableSetOf<String>()
     private val recordedStrategies = mutableListOf<String>()
+    private val recordedPackages = mutableSetOf<String>()
 
     /**
      * Records an executed step and its verified result.
@@ -29,9 +31,24 @@ class MissionMemory {
 
             step.target?.value?.let { discoveredElements.add(it) }
 
+            // Track packages involved
+            if (step.action == AutonomousActionType.OPEN_APP) {
+                step.target?.value?.let { recordedPackages.add(it) }
+            }
+
             if (!result.success || !result.verified) {
                 failureRecords.add(Pair(step, result.reason))
             }
+        }
+    }
+
+    /**
+     * Records a package name encountered or interacted with during the mission.
+     */
+    fun recordPackage(packageName: String) {
+        if (packageName.isBlank()) return
+        synchronized(lock) {
+            recordedPackages.add(packageName)
         }
     }
 
@@ -80,6 +97,26 @@ class MissionMemory {
         return sb.toString().trim()
     }
 
+    /**
+     * Generates a high-signal, concise mission summary suitable for persistent Task History.
+     */
+    fun generateMissionSummary(userGoal: String): String = synchronized(lock) {
+        if (executedActions.isEmpty()) return "Executed goal: \"$userGoal\" (no actions dispatched)."
+
+        val actionsSummary = executedActions.mapIndexed { idx, step ->
+            val res = actionResults.getOrNull(idx)
+            val targetStr = step.target?.value?.let { " '$it'" } ?: ""
+            val statusStr = if (res?.success == true) "OK" else "FAIL"
+            "${step.action}$targetStr ($statusStr)"
+        }.joinToString(" -> ")
+
+        return "Goal: \"$userGoal\". Steps (${executedActions.size}): $actionsSummary."
+    }
+
+    fun getInvolvedPackages(): List<String> = synchronized(lock) {
+        recordedPackages.toList()
+    }
+
     fun clear() {
         synchronized(lock) {
             executedActions.clear()
@@ -87,6 +124,7 @@ class MissionMemory {
             failureRecords.clear()
             discoveredElements.clear()
             recordedStrategies.clear()
+            recordedPackages.clear()
         }
     }
 
