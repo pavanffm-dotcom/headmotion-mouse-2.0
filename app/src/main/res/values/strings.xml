@@ -1,0 +1,91 @@
+<resources>
+    <string name="app_name">HeadMouse</string>
+    <string name="app_subtitle">Hands-Free Control</string>
+    <string name="accessibility_service_description">Hands-free head and eye tracking mouse control.</string>
+    
+    <!-- Permissions & Status -->
+    <string name="status_ready">Ready</string>
+    <string name="status_needs_permissions">Setup Permissions</string>
+    <string name="btn_grant_camera">Camera</string>
+    <string name="btn_grant_mic">Microphone</string>
+    <string name="btn_grant_overlay">Overlay</string>
+    <string name="btn_enable_accessibility">Accessibility</string>
+    <string name="permission_camera_granted">Camera ✓</string>
+    <string name="permission_mic_granted">Microphone ✓</string>
+    <string name="permission_overlay_granted">Overlay ✓</string>
+    <string name="permission_accessibility_granted">Accessibility ✓</string>
+
+    <!-- Calibration & Sliders -->
+    <string name="title_tracking_settings">Controls</string>
+    <string name="label_dwell_enable">Auto Click</string>
+    <string name="desc_dwell_enable">Click when resting</string>
+    <string name="label_cursor_speed">Speed</string>
+    <string name="label_sens_x">Horizontal Sensitivity</string>
+    <string name="label_sens_y">Vertical Sensitivity</string>
+    <string name="label_dwell_time">Click Delay</string>
+    <string name="label_keyboard_dwell_time">Typing Delay</string>
+    <string name="label_smoothing">Smoothing</string>
+    <string name="label_deadzone">Deadzone</string>
+    <string name="btn_calibrate_center">Recenter</string>
+    
+    <!-- Action Dock Buttons -->
+    <string name="dock_single_click">Click</string>
+    <string name="dock_double_click">Double Click</string>
+    <string name="dock_long_press">Long Press</string>
+    <string name="dock_drag">Drag</string>
+    <string name="dock_scroll_up">Scroll Up</string>
+    <string name="dock_scroll_down">Scroll Down</string>
+    <string name="dock_back">Back</string>
+    <string name="dock_home">Home</string>
+    <string name="dock_recents">Recents</string>
+    <string name="dock_notifications">Notifications</string>
+    <string name="dock_pause">Pause</string>
+    <string name="dock_resume">Resume</string>
+    <string name="dock_recenter">Recenter</string>
+
+    <!-- Test Sandbox -->
+    <string name="sandbox_title">Practice Sandbox</string>
+    <string name="sandbox_desc">Test targets:</string>
+    <string name="sandbox_btn_1">Target 1</string>
+    <string name="sandbox_btn_2">Target 2</string>
+    <string name="sandbox_btn_3">Target 3</string>
+    <string name="sandbox_input_hint">Type here to test...</string>
+    <string name="sandbox_click_count">Clicks: %d</string>
+
+    <!-- Navigation & Power -->
+    <string name="master_service_active">STOP MOUSE</string>
+    <string name="master_service_stopped">START MOUSE</string>
+    <string name="desc_master_active">Mouse is running</string>
+    <string name="desc_master_stopped">Mouse is stopped</string>
+
+    <!-- 4 Dedicated Operating Modes -->
+    <string name="mode_head_only_title">Head Tracking</string>
+    <string name="mode_head_only_desc">Head motion cursor</string>
+    <string name="mode_eye_only_title">Eye Tracking</string>
+    <string name="mode_eye_only_desc">Eye gaze cursor</string>
+    <string name="mode_head_voice_title">Head + Voice</string>
+    <string name="mode_head_voice_desc">Head cursor with voice</string>
+    <string name="mode_eye_voice_title">Eye + Voice</string>
+    <string name="mode_eye_voice_desc">Eye cursor with voice</string>
+    <string name="hub_title_distinct">TRACKING MODES</string>
+
+    <!-- Voice Commands & Audio Permissions -->
+    <string name="title_voice_commands">Voice Commands</string>
+    <string name="desc_voice_commands">Commands: Down, Up, Click, Back, Home</string>
+    <string name="hub_title">Tracking Modes</string>
+
+    <!-- Quick Controls -->
+    <string name="quick_controls_title">QUICK CONTROLS</string>
+    <string name="quick_pause">Pause</string>
+    <string name="quick_resume">Resume</string>
+    <string name="dock_side_right">Dock: Right</string>
+    <string name="dock_side_left">Dock: Left</string>
+    <string name="status_tracking_active">ACTIVE</string>
+    <string name="status_tracking_paused">PAUSED</string>
+    <string name="status_tracking_stopped">STOPPED</string>
+    <string name="fps_mode_30">FPS: 30</string>
+    <string name="fps_mode_60">FPS: 60</string>
+    <string name="fps_mode_120">FPS: 120</string>
+    <string name="guide_teeth_toggle_title">Teeth-Reveal Gesture</string>
+    <string name="guide_teeth_toggle_desc">Show bared teeth or wide smile to instantly Pause or Resume tracking hands-free.</string>
+</resources>

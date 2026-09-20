@@ -1,0 +1,11 @@
+{
+  "name": "HeadMotionMouse",
+  "description": "Hands-free head motion and gesture tracking mouse accessibility service for Android",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

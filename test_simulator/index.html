@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeadMotion Mouse - Interactive Hands-Free Simulator</title>
+    <!-- MediaPipe Face Mesh -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #101014;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Top Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #1a1a22;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid #2d2d3a;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.15rem;
+            color: #00e5ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            background: #ff910022;
+            color: #ff9100;
+            border: 1px solid #ff9100;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge.active {
+            background: #00e67622;
+            color: #00e676;
+            border-color: #00e676;
+        }
+
+        .status-badge.error {
+            background: #ff174422;
+            color: #ff1744;
+            border-color: #ff1744;
+        }
+
+        /* Permission Prompt Modal Banner */
+        #permission-banner {
+            position: fixed;
+            top: 66px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #0066ff, #00b4d8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 102, 255, 0.4);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -5px); }
+        }
+
+        #btn-grant-cam {
+            background: #ffffff;
+            color: #0066ff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+
+        #btn-grant-cam:hover {
+            transform: scale(1.05);
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            height: calc(100vh - 56px);
+            margin-top: 56px;
+        }
+
+        /* Left Panel: Camera & Sliders */
+        .panel {
+            background: #16161e;
+            border-right: 1px solid #262632;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+
+        .camera-container {
+            width: 100%;
+            height: 210px;
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            border: 1.5px solid #00e5ff55;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #mesh-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+            pointer-events: none;
+        }
+
+        .camera-overlay-tag {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00e5ff;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .card {
+            background: #20202c;
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid #303042;
+        }
+
+        .card h3 {
+            font-size: 0.92rem;
+            color: #00e5ff;
+            margin-bottom: 12px;
+        }
+
+        .setting-row {
+            margin-bottom: 12px;
+        }
+
+        .setting-row label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #bbb;
+            margin-bottom: 4px;
+        }
+
+        .setting-row input[type="range"] {
+            width: 100%;
+            accent-color: #0066ff;
+            cursor: pointer;
+        }
+
+        button.btn {
+            width: 100%;
+            padding: 10px;
+            background: #0066ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button.btn:hover {
+            background: #0052cc;
+        }
+
+        /* Center Column: Phone Sandbox Stage */
+        .phone-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0e;
+            position: relative;
+        }
+
+        .phone-frame {
+            width: 380px;
+            height: 720px;
+            background: #181822;
+            border: 3.5px solid #333346;
+            border-radius: 36px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-header {
+            padding: 14px 16px;
+            background: #222230;
+            border-bottom: 1px solid #353545;
+            text-align: center;
+        }
+
+        .phone-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .target-btn {
+            padding: 14px;
+            background: #0066ff;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35);
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .target-btn.clicked {
+            background: #00e676;
+            transform: scale(0.95);
+        }
+
+        .interactive-input {
+            width: 100%;
+            padding: 12px;
+            background: #111116;
+            border: 1.5px solid #00e5ff66;
+            border-radius: 10px;
+            color: white;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .interactive-input:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        /* Floating Action Dock (Inside Phone) */
+        .dock-bar {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(18, 18, 26, 0.94);
+            border: 1.5px solid #00e5ff77;
+            border-radius: 22px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            z-index: 50;
+        }
+
+        .dock-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #252536;
+            border: 1px solid #444458;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .dock-btn.active {
+            background: #0066ff;
+            border-color: #00e5ff;
+            box-shadow: 0 0 12px #00e5ff;
+        }
+
+        /* Floating 3-Dot Cursor Overlay */
+        #cursor-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Right Column: Live Telemetry */
+        .metrics-panel {
+            background: #16161e;
+            border-left: 1px solid #262632;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .metric-box {
+            background: #20202c;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #303042;
+        }
+
+        .metric-box span {
+            font-size: 0.78rem;
+            color: #888;
+        }
+
+        .metric-box strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #00e676;
+            margin-top: 4px;
+        }
+
+        .info-card {
+            background: #191924;
+            border: 1px solid #333346;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .info-card strong {
+            color: #00e5ff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1><span>🎯</span> HeadMotion Mouse Simulator</h1>
+        <div class="header-actions">
+            <div class="status-badge" id="camera-status">📷 Camera: Click Button to Enable</div>
+        </div>
+    </header>
+
+    <!-- Permission Trigger Banner -->
+    <div id="permission-banner">
+        <span>📸 Web camera access is needed for head tracking</span>
+        <button id="btn-grant-cam">Allow Camera Now</button>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+        <!-- Left Panel: Camera & Sliders -->
+        <div class="panel">
+            <div class="camera-container">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="mesh-canvas"></canvas>
+                <div class="camera-overlay-tag" id="face-state-tag">No Face Detected</div>
+            </div>
+
+            <div class="card">
+                <h3>Sensitivity & Dwell Control</h3>
+                
+                <div class="setting-row">
+                    <label><span>Horizontal Speed (X)</span><span id="val-sens-x">2.0x</span></label>
+                    <input type="range" id="slider-sens-x" min="0.5" max="4.0" step="0.1" value="2.0">
+                </div>
+
+                <div class="setting-row">
+                    <label><span>Vertical Speed (Y)</span><span id="val-sens-y">2.0x</span></label>
+                    <input type="range" id="slider-sens-y" min="0.5" max="4.0" step="0.1" value="2.0">
+                </div>
+
+                <div class="setting-row">
+                    <label><span>Dwell Click Timer</span><span id="val-dwell">1.0s</span></label>
+                    <input type="range" id="slider-dwell" min="0.4" max="2.5" step="0.1" value="1.0">
+                </div>
+
+                <div class="setting-row">
+                    <label><span>1€ Anti-Jitter Smoothing</span><span id="val-smooth">High</span></label>
+                    <input type="range" id="slider-smooth" min="0.2" max="2.0" step="0.1" value="0.8">
+                </div>
+
+                <button class="btn" id="btn-recalibrate" style="margin-top: 6px;">🎯 Recenter Calibration</button>
+            </div>
+
+            <div class="info-card">
+                <strong>💡 Tip:</strong> If Chrome doesn't ask for camera permission, open via local server: run <code>start_simulator.bat</code> or <code>python -m http.server 8000</code>.
+            </div>
+        </div>
+
+        <!-- Center Column: Simulated Phone Sandbox -->
+        <div class="phone-stage">
+            <div class="phone-frame" id="phone-screen">
+                <canvas id="cursor-layer"></canvas>
+
+                <div class="phone-header">
+                    <h2 style="font-size: 0.95rem; color: #fff;">Hands-Free Android Sandbox</h2>
+                    <p style="font-size: 0.75rem; color: #aaa;">Hover 3-dot cursor over targets to click!</p>
+                </div>
+
+                <div class="phone-content" id="scrollable-content">
+                    <div class="metric-box" style="background: #242436;">
+                        <span>Interactive Test Score</span>
+                        <strong id="click-counter" style="color: #00e676;">0 Successful Dwell Clicks</strong>
+                    </div>
+
+                    <button class="target-btn" id="btn-target-1">🎯 Target Alpha (Dwell Click)</button>
+                    <button class="target-btn" id="btn-target-2">🚀 Target Beta (Dwell Click)</button>
+                    <button class="target-btn" id="btn-target-3">⚡ Target Gamma (Dwell Click)</button>
+
+                    <input type="text" class="interactive-input" id="test-input" placeholder="Hover here to focus input...">
+
+                    <div style="background: #222230; padding: 12px; border-radius: 10px; font-size: 0.8rem; color: #ccc;">
+                        <strong>✨ Gesture Bar Actions:</strong>
+                        <p style="margin-top: 4px; color: #888;">Use the dock on the right to toggle Double Click, Long Press, or Scroll modes!</p>
+                    </div>
+
+                    <div style="height: 220px; background: #1c1c28; border-radius: 10px; padding: 12px; font-size: 0.8rem; color: #888;">
+                        Scrollable Test Area: Try activating "Scroll Up" or "Scroll Down" on the dock!
+                    </div>
+                </div>
+
+                <!-- Floating Action Dock -->
+                <div class="dock-bar">
+                    <div class="dock-btn active" id="dock-tap" title="Single Click">👆</div>
+                    <div class="dock-btn" id="dock-double" title="Double Click">✌️</div>
+                    <div class="dock-btn" id="dock-hold" title="Long Press">✊</div>
+                    <div class="dock-btn" id="dock-up" title="Scroll Up">⬆️</div>
+                    <div class="dock-btn" id="dock-down" title="Scroll Down">⬇️</div>
+                    <div class="dock-btn" id="dock-recenter" title="Recenter">🎯</div>
+                    <div class="dock-btn" id="dock-pause" title="Pause / Resume">⏸️</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Telemetry -->
+        <div class="metrics-panel">
+            <h3 style="color: #00e5ff; font-size: 0.95rem;">Live Head Telemetry</h3>
+
+            <div class="metric-box">
+                <span>Tracking Status</span>
+                <strong id="metric-face-status" style="color: #ff9100;">Searching for Face...</strong>
+            </div>
+
+            <div class="metric-box">
+                <span>Head Pitch (Up/Down)</span>
+                <strong id="metric-pitch">0.0°</strong>
+            </div>
+
+            <div class="metric-box">
+                <span>Head Yaw (Left/Right)</span>
+                <strong id="metric-yaw">0.0°</strong>
+            </div>
+
+            <div class="metric-box">
+                <span>Screen Cursor Position</span>
+                <strong id="metric-coord">X: 190, Y: 360</strong>
+            </div>
+
+            <div class="metric-box">
+                <span>Active Mode</span>
+                <strong id="metric-mode" style="color: #0066ff;">Single Click</strong>
+            </div>
+
+            <div class="metric-box">
+                <span>Dwell Timer Progress</span>
+                <strong id="metric-dwell" style="color: #00e676;">0%</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // One Euro Filter Implementation
+        // -------------------------------------------------------------
+        class OneEuroFilter {
+            constructor(minCutoff = 0.8, beta = 0.05, dCutoff = 1.0) {
+                this.minCutoff = minCutoff;
+                this.beta = beta;
+                this.dCutoff = dCutoff;
+                this.xPrev = null;
+                this.dxPrev = 0.0;
+                this.tPrev = null;
+            }
+
+            filter(x, t) {
+                if (this.xPrev === null || this.tPrev === null) {
+                    this.xPrev = x;
+                    this.dxPrev = 0.0;
+                    this.tPrev = t;
+                    return x;
+                }
+                const dt = t - this.tPrev;
+                if (dt <= 0) return this.xPrev;
+
+                const dx = (x - this.xPrev) / dt;
+                const alphaD = this.alpha(dt, this.dCutoff);
+                const edx = alphaD * dx + (1.0 - alphaD) * this.dxPrev;
+                this.dxPrev = edx;
+
+                const cutoff = this.minCutoff + this.beta * Math.abs(edx);
+                const alphaX = this.alpha(dt, cutoff);
+                const xFilt = alphaX * x + (1.0 - alphaX) * this.xPrev;
+
+                this.xPrev = xFilt;
+                this.tPrev = t;
+                return xFilt;
+            }
+
+            alpha(dt, cutoff) {
+                const tau = 1.0 / (2.0 * Math.PI * cutoff);
+                return 1.0 / (1.0 + tau / dt);
+            }
+
+            reset() {
+                this.xPrev = null;
+                this.tPrev = null;
+                this.dxPrev = 0.0;
+            }
+        }
+
+        // -------------------------------------------------------------
+        // Setup State & Canvas
+        // -------------------------------------------------------------
+        const phoneScreen = document.getElementById('phone-screen');
+        const cursorCanvas = document.getElementById('cursor-layer');
+        const cursorCtx = cursorCanvas.getContext('2d');
+        const meshCanvas = document.getElementById('mesh-canvas');
+        const meshCtx = meshCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            cursorCanvas.width = phoneScreen.clientWidth;
+            cursorCanvas.height = phoneScreen.clientHeight;
+            meshCanvas.width = meshCanvas.clientWidth;
+            meshCanvas.height = meshCanvas.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 200);
+
+        const filterX = new OneEuroFilter(0.8, 0.05);
+        const filterY = new OneEuroFilter(0.8, 0.05);
+
+        let sensX = 2.0;
+        let sensY = 2.0;
+        let dwellDuration = 1000;
+        let centerYaw = 0;
+        let centerPitch = 0;
+        let isPaused = false;
+        let hasFace = false;
+        let currentMode = 'SINGLE';
+
+        let cursorX = 190;
+        let cursorY = 360;
+        let dwellAnchorX = cursorX;
+        let dwellAnchorY = cursorY;
+        let dwellStartTime = Date.now();
+        let dwellProgress = 0;
+        let totalClicks = 0;
+
+        // UI references
+        const webcam = document.getElementById('webcam');
+        const statusBadge = document.getElementById('camera-status');
+        const permissionBanner = document.getElementById('permission-banner');
+        const faceStateTag = document.getElementById('face-state-tag');
+        const metricPitch = document.getElementById('metric-pitch');
+        const metricYaw = document.getElementById('metric-yaw');
+        const metricCoord = document.getElementById('metric-coord');
+        const metricDwell = document.getElementById('metric-dwell');
+        const metricMode = document.getElementById('metric-mode');
+        const metricFaceStatus = document.getElementById('metric-face-status');
+        const clickCounter = document.getElementById('click-counter');
+
+        // Sliders
+        document.getElementById('slider-sens-x').addEventListener('input', (e) => {
+            sensX = parseFloat(e.target.value);
+            document.getElementById('val-sens-x').innerText = sensX.toFixed(1) + 'x';
+        });
+        document.getElementById('slider-sens-y').addEventListener('input', (e) => {
+            sensY = parseFloat(e.target.value);
+            document.getElementById('val-sens-y').innerText = sensY.toFixed(1) + 'x';
+        });
+        document.getElementById('slider-dwell').addEventListener('input', (e) => {
+            dwellDuration = parseFloat(e.target.value) * 1000;
+            document.getElementById('val-dwell').innerText = (dwellDuration / 1000).toFixed(1) + 's';
+        });
+        document.getElementById('slider-smooth').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            filterX.minCutoff = val;
+            filterY.minCutoff = val;
+            document.getElementById('val-smooth').innerText = val < 0.6 ? 'High Stabilization' : val < 1.2 ? 'Balanced' : 'Fast Response';
+        });
+
+        document.getElementById('btn-recalibrate').addEventListener('click', () => {
+            filterX.reset();
+            filterY.reset();
+            centerYaw = lastRawYaw;
+            centerPitch = lastRawPitch;
+            cursorX = cursorCanvas.width / 2;
+            cursorY = cursorCanvas.height / 2;
+        });
+
+        let lastRawYaw = 0;
+        let lastRawPitch = 0;
+
+        // -------------------------------------------------------------
+        // Camera Permission Request
+        // -------------------------------------------------------------
+        async function requestCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                });
+                webcam.srcObject = stream;
+                await webcam.play();
+                
+                permissionBanner.style.display = 'none';
+                statusBadge.innerText = '📷 Camera: Active';
+                statusBadge.className = 'status-badge active';
+                
+                startFaceMesh();
+            } catch (err) {
+                console.error("Camera access error:", err);
+                statusBadge.innerText = '⚠️ Camera Blocked / Denied';
+                statusBadge.className = 'status-badge error';
+                alert("Camera permission was denied or blocked. If running via file://, please run 'start_simulator.bat' to launch on http://localhost:8000.");
+            }
+        }
+
+        document.getElementById('btn-grant-cam').addEventListener('click', requestCamera);
+        // Auto trigger request on load
+        window.addEventListener('DOMContentLoaded', () => {
+            requestCamera();
+        });
+
+        // -------------------------------------------------------------
+        // Dwell Click Engine
+        // -------------------------------------------------------------
+        function executeDwellClick(x, y) {
+            const phoneRect = phoneScreen.getBoundingClientRect();
+            const clientX = phoneRect.left + x;
+            const clientY = phoneRect.top + y;
+
+            const element = document.elementFromPoint(clientX, clientY);
+            if (element) {
+                if (element.classList.contains('target-btn')) {
+                    totalClicks++;
+                    clickCounter.innerText = totalClicks + ' Successful Dwell Clicks';
+                    element.classList.add('clicked');
+                    setTimeout(() => element.classList.remove('clicked'), 250);
+                } else if (element.classList.contains('dock-btn')) {
+                    element.click();
+                } else if (element.tagName === 'INPUT') {
+                    element.focus();
+                }
+            }
+
+            playAudioFeedback();
+        }
+
+        function playAudioFeedback() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        // Dock buttons
+        document.getElementById('dock-tap').addEventListener('click', () => setMode('SINGLE'));
+        document.getElementById('dock-double').addEventListener('click', () => setMode('DOUBLE'));
+        document.getElementById('dock-hold').addEventListener('click', () => setMode('HOLD'));
+        document.getElementById('dock-up').addEventListener('click', () => {
+            document.getElementById('scrollable-content').scrollTop -= 120;
+        });
+        document.getElementById('dock-down').addEventListener('click', () => {
+            document.getElementById('scrollable-content').scrollTop += 120;
+        });
+        document.getElementById('dock-recenter').addEventListener('click', () => {
+            filterX.reset();
+            filterY.reset();
+            centerYaw = lastRawYaw;
+            centerPitch = lastRawPitch;
+            cursorX = cursorCanvas.width / 2;
+            cursorY = cursorCanvas.height / 2;
+        });
+        document.getElementById('dock-pause').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('dock-pause').innerText = isPaused ? '▶️' : '⏸️';
+        });
+
+        function setMode(mode) {
+            currentMode = mode;
+            metricMode.innerText = mode;
+            document.querySelectorAll('.dock-btn').forEach(btn => btn.classList.remove('active'));
+            if (mode === 'SINGLE') document.getElementById('dock-tap').classList.add('active');
+            if (mode === 'DOUBLE') document.getElementById('dock-double').classList.add('active');
+            if (mode === 'HOLD') document.getElementById('dock-hold').classList.add('active');
+        }
+
+        // -------------------------------------------------------------
+        // Render 3-Dot Cursor & Dwell Indicator
+        // -------------------------------------------------------------
+        function renderCursor() {
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+
+            if (!hasFace) {
+                // Dimmed / No face state
+                cursorCtx.beginPath();
+                cursorCtx.arc(cursorX, cursorY, 14, 0, Math.PI * 2);
+                cursorCtx.fillStyle = 'rgba(255, 145, 0, 0.7)';
+                cursorCtx.fill();
+                return;
+            }
+
+            if (isPaused) {
+                cursorCtx.beginPath();
+                cursorCtx.arc(cursorX, cursorY, 14, 0, Math.PI * 2);
+                cursorCtx.fillStyle = '#ffaa00';
+                cursorCtx.fill();
+                return;
+            }
+
+            // 1. Outer targeting halo
+            cursorCtx.beginPath();
+            cursorCtx.arc(cursorX, cursorY, 26, 0, Math.PI * 2);
+            cursorCtx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+            cursorCtx.lineWidth = 2.5;
+            cursorCtx.stroke();
+
+            // 2. Dwell Sweep Progress Ring
+            if (dwellProgress > 0) {
+                cursorCtx.beginPath();
+                cursorCtx.arc(cursorX, cursorY, 26, -Math.PI / 2, -Math.PI / 2 + dwellProgress * (Math.PI * 2));
+                cursorCtx.strokeStyle = '#00e676';
+                cursorCtx.lineWidth = 5;
+                cursorCtx.stroke();
+            }
+
+            // 3. Three-Dot Gesture Bar
+            const dotSpacing = 14;
+            const dotRadius = 4;
+
+            // Left dot
+            cursorCtx.beginPath();
+            cursorCtx.arc(cursorX - dotSpacing, cursorY, dotRadius, 0, Math.PI * 2);
+            cursorCtx.fillStyle = '#ffffff';
+            cursorCtx.fill();
+
+            // Center target dot
+            cursorCtx.beginPath();
+            cursorCtx.arc(cursorX, cursorY, dotRadius + 1.5, 0, Math.PI * 2);
+            cursorCtx.fillStyle = dwellProgress >= 0.95 ? '#00e676' : '#00e5ff';
+            cursorCtx.fill();
+
+            // Right dot
+            cursorCtx.beginPath();
+            cursorCtx.arc(cursorX + dotSpacing, cursorY, dotRadius, 0, Math.PI * 2);
+            cursorCtx.fillStyle = '#ffffff';
+            cursorCtx.fill();
+        }
+
+        // -------------------------------------------------------------
+        // MediaPipe FaceMesh Loop
+        // -------------------------------------------------------------
+        function startFaceMesh() {
+            const faceMesh = new FaceMesh({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+            });
+
+            faceMesh.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            faceMesh.onResults((results) => {
+                meshCtx.clearRect(0, 0, meshCanvas.width, meshCanvas.height);
+
+                if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+                    hasFace = false;
+                    faceStateTag.innerText = 'No Face Detected';
+                    faceStateTag.style.color = '#ff9100';
+                    metricFaceStatus.innerText = '⚠️ No Face in View';
+                    metricFaceStatus.style.color = '#ff9100';
+                    renderCursor();
+                    return;
+                }
+
+                hasFace = true;
+                faceStateTag.innerText = 'Face Tracking Active ✓';
+                faceStateTag.style.color = '#00e676';
+                metricFaceStatus.innerText = 'Tracking Head Pose ✓';
+                metricFaceStatus.style.color = '#00e676';
+
+                const landmarks = results.multiFaceLandmarks[0];
+                const nose = landmarks[1];
+                const forehead = landmarks[10];
+                const chin = landmarks[152];
+                const leftCheek = landmarks[234];
+                const rightCheek = landmarks[454];
+
+                // Draw nose point on mesh canvas
+                meshCtx.beginPath();
+                meshCtx.arc(nose.x * meshCanvas.width, nose.y * meshCanvas.height, 5, 0, Math.PI * 2);
+                meshCtx.fillStyle = '#00e5ff';
+                meshCtx.fill();
+
+                // Compute Head Pitch & Yaw
+                const yaw = (nose.x - (leftCheek.x + rightCheek.x) / 2) * 120;
+                const pitch = (nose.y - (forehead.y + chin.y) / 2) * 120;
+
+                // Pre-smoothing on raw camera angles to eliminate AI detection noise
+                if (lastRawYaw === undefined) {
+                    lastRawYaw = yaw;
+                    lastRawPitch = pitch;
+                } else {
+                    lastRawYaw += 0.15 * (yaw - lastRawYaw);
+                    lastRawPitch += 0.15 * (pitch - lastRawPitch);
+                }
+
+                metricPitch.innerText = lastRawPitch.toFixed(1) + '°';
+                metricYaw.innerText = lastRawYaw.toFixed(1) + '°';
+
+                // Real-time speed calculation for Dynamic Precision Curve
+                const nowSec = performance.now() / 1000;
+                const dt = window.lastSimTime ? Math.min(0.1, Math.max(0.005, nowSec - window.lastSimTime)) : 0.033;
+                window.lastSimTime = nowSec;
+
+                const speed = Math.hypot((lastRawYaw - (window.prevRawYaw || lastRawYaw)) / dt, (lastRawPitch - (window.prevRawPitch || lastRawPitch)) / dt);
+                window.prevRawYaw = lastRawYaw;
+                window.prevRawPitch = lastRawPitch;
+
+                // Precision Gain Curve
+                const precisionFactor = speed < 2.5 ? 0.45 : (speed > 8.0 ? 2.5 : 0.45 + (speed - 2.5) / 5.5 * 2.05);
+
+                if (!isPaused) {
+                    const deltaYaw = (lastRawYaw - centerYaw) * precisionFactor;
+                    const deltaPitch = (lastRawPitch - centerPitch) * precisionFactor;
+
+                    const rawX = (cursorCanvas.width / 2) - (deltaYaw * sensX * 22);
+                    const rawY = (cursorCanvas.height / 2) + (deltaPitch * sensY * 30);
+
+                    // Anti-jitter filter
+                    const smoothX = Math.max(12, Math.min(cursorCanvas.width - 12, filterX.filter(rawX, nowSec)));
+                    const smoothY = Math.max(12, Math.min(cursorCanvas.height - 12, filterY.filter(rawY, nowSec)));
+
+                    // Adaptive Magnetic Snapping
+                    if (window.lastSimX === undefined) {
+                        cursorX = smoothX;
+                        cursorY = smoothY;
+                    } else {
+                        const distMove = Math.hypot(smoothX - window.lastSimX, smoothY - window.lastSimY);
+                        const snapDist = speed < 4.0 ? 55.0 : 22.0;
+                        if (distMove < snapDist) {
+                            cursorX = window.lastSimX;
+                            cursorY = window.lastSimY;
+                        } else {
+                            cursorX = smoothX;
+                            cursorY = smoothY;
+                        }
+                    }
+                    window.lastSimX = cursorX;
+                    window.lastSimY = cursorY;
+
+                    metricCoord.innerText = `X: ${Math.round(cursorX)}, Y: ${Math.round(cursorY)}`;
+
+                    // Sticky Magnetic Dwell Lock (1.5cm hitbox)
+                    const dist = Math.hypot(cursorX - dwellAnchorX, cursorY - dwellAnchorY);
+                    const nowMs = Date.now();
+
+                    if (dist > 55) {
+                        dwellAnchorX = cursorX;
+                        dwellAnchorY = cursorY;
+                        dwellStartTime = nowMs;
+                        dwellProgress = 0;
+                    } else {
+                        cursorX = dwellAnchorX;
+                        cursorY = dwellAnchorY;
+
+                        const elapsed = nowMs - dwellStartTime;
+                        dwellProgress = Math.min(1.0, elapsed / dwellDuration);
+
+                        if (dwellProgress >= 1.0) {
+                            executeDwellClick(dwellAnchorX, dwellAnchorY);
+                            dwellStartTime = nowMs;
+                            dwellProgress = 0;
+                        }
+                    }
+                    metricDwell.innerText = Math.round(dwellProgress * 100) + '%';
+                }
+
+                renderCursor();
+            });
+
+            // Camera frame capture loop
+            const camera = new Camera(webcam, {
+                onFrame: async () => {
+                    await faceMesh.send({ image: webcam });
+                },
+                width: 320,
+                height: 240
+            });
+
+            camera.start();
+        }
+    </script>
+</body>
+</html>

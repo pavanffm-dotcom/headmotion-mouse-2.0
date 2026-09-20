@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dock_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dock"
+    android:orientation="vertical"
+    android:padding="4dp"
+    android:gravity="center">
+
+    <!-- Nav: Home -->
+    <ImageButton
+        android:id="@+id/btn_nav_home"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_nav_home"
+        android:contentDescription="@string/dock_home" />
+
+    <!-- Nav: Back -->
+    <ImageButton
+        android:id="@+id/btn_nav_back"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_nav_back"
+        android:contentDescription="@string/dock_back" />
+
+    <View
+        android:layout_width="24dp"
+        android:layout_height="1dp"
+        android:layout_marginVertical="2dp"
+        android:background="#33FFFFFF" />
+
+    <!-- Action: Scroll Up -->
+    <ImageButton
+        android:id="@+id/btn_action_scroll_up"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_scroll_up"
+        android:contentDescription="@string/dock_scroll_up" />
+
+    <!-- Action: Scroll Down -->
+    <ImageButton
+        android:id="@+id/btn_action_scroll_down"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_scroll_down"
+        android:contentDescription="@string/dock_scroll_down" />
+
+    <View
+        android:layout_width="24dp"
+        android:layout_height="1dp"
+        android:layout_marginVertical="2dp"
+        android:background="#33FFFFFF" />
+
+    <!-- Action: Swipe Left -->
+    <ImageButton
+        android:id="@+id/btn_action_swipe_left"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_swipe_left"
+        android:contentDescription="@string/dock_single_click" />
+
+    <!-- Action: Swipe Right -->
+    <ImageButton
+        android:id="@+id/btn_action_swipe_right"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_swipe_right"
+        android:contentDescription="@string/dock_single_click" />
+
+    <View
+        android:layout_width="24dp"
+        android:layout_height="1dp"
+        android:layout_marginVertical="2dp"
+        android:background="#33FFFFFF" />
+
+    <!-- Utility: Recenter -->
+    <ImageButton
+        android:id="@+id/btn_util_recenter"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_recenter"
+        android:contentDescription="@string/dock_recenter" />
+
+    <!-- Utility: Sleep / Pause / Wake Up (Hands-Free) -->
+    <ImageButton
+        android:id="@+id/btn_util_pause_resume"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginVertical="2dp"
+        android:background="@drawable/bg_dock_button_selector"
+        android:src="@drawable/ic_pause"
+        android:contentDescription="@string/dock_pause" />
+
+</LinearLayout>

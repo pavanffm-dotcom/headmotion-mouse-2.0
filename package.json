@@ -1,0 +1,12 @@
+{
+  "name": "headmotionmouse",
+  "version": "1.0.0",
+  "description": "Hands-free head motion and gesture tracking mouse accessibility service for Android",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.ts",
+    "start": "node server.ts",
+    "build": "node -e \"console.log('Build completed')\""
+  },
+  "dependencies": {}
+}

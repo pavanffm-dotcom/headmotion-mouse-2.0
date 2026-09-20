@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_custom_model"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@color/surface_dark"
+    app:cardCornerRadius="14dp"
+    app:strokeColor="#22FFFFFF"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Top Row: Name and Active Badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_item_model_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="xKiro DeepSeek V3"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_item_active_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dock_button_active"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="★ ACTIVE BRAIN"
+                android:textColor="#000000"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Model ID -->
+        <TextView
+            android:id="@+id/tv_item_model_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Model: deepseek/deepseek-chat"
+            android:textColor="@color/secondary"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
+
+        <!-- Base URL -->
+        <TextView
+            android:id="@+id/tv_item_base_url"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="URL: https://api.xkiro.com/v1"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp" />
+
+        <!-- API Key Status -->
+        <TextView
+            android:id="@+id/tv_item_key_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Key: sk-••••••••"
+            android:textColor="@color/accent_orange"
+            android:textSize="11sp" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="10dp"
+            android:background="#15FFFFFF" />
+
+        <!-- Buttons Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_item_configure"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1.6"
+                android:layout_marginEnd="8dp"
+                android:text="CONFIGURE BRAIN"
+                android:textColor="#000000"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/secondary"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_item_delete"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="0.8"
+                android:text="DELETE"
+                android:textColor="@color/accent_red"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:strokeColor="@color/accent_red"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

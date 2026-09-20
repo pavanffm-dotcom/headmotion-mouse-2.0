@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Interactive Test Suite"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_close_test_suite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CLOSE"
+            android:textColor="@color/accent_orange"
+            app:backgroundTint="@color/surface_dark"
+            app:cornerRadius="10dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_test_instructions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Hands-free verification: Select a module below to test accuracy, speed, and thermals."
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+    <!-- 5 Module Switcher Chips/Buttons -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_mod_accuracy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accuracy (3x3)"
+                android:textSize="12sp"
+                app:backgroundTint="@color/secondary"
+                android:textColor="@color/card_dark"
+                app:cornerRadius="14dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_mod_speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Dwell Speed"
+                android:textSize="12sp"
+                app:backgroundTint="@color/card_dark"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="14dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_mod_keyboard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Keyboard Snap"
+                android:textSize="12sp"
+                app:backgroundTint="@color/card_dark"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="14dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_mod_thermals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="FPS &amp; Thermals"
+                android:textSize="12sp"
+                app:backgroundTint="@color/card_dark"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="14dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_mod_gestures"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Gestures"
+                android:textSize="12sp"
+                app:backgroundTint="@color/card_dark"
+                android:textColor="@color/text_primary"
+                app:cornerRadius="14dp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Test Stage Arena Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_test_stage"
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/card_dark"
+        app:cardCornerRadius="16dp"
+        app:strokeColor="#33FFFFFF"
+        app:strokeWidth="1.5dp">
+
+        <RelativeLayout
+            android:id="@+id/layout_stage_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_stage_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="Tap 'START TEST' to begin hands-free validation"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_stage_target"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_centerInParent="true"
+                android:visibility="gone"
+                android:text="TARGET"
+                android:textSize="10sp"
+                app:backgroundTint="@color/accent_green"
+                app:cornerRadius="30dp" />
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Controls Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_start_test"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="START TEST"
+            android:textColor="@color/card_dark"
+            android:textStyle="bold"
+            app:backgroundTint="@color/secondary"
+            app:cornerRadius="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_share_report"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:text="EXPORT REPORT"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            app:backgroundTint="@color/surface_dark"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/secondary"
+            app:strokeWidth="1.5dp" />
+    </LinearLayout>
+
+    <!-- Live Results Summary Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_test_results"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        app:cardBackgroundColor="@color/card_dark"
+        app:cardCornerRadius="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_result_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Test Result: Ready"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_result_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Score: Awaiting execution"
+                android:textColor="@color/secondary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_result_detail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Select a module above and start hands-free evaluation."
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>
